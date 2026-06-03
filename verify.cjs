@@ -42,6 +42,7 @@ new Function("require", "__dirname", "process", "console", server);
 
 [
   "微信内置浏览器",
+  "https://sherlock2040.github.io/guandan-score-wechat/",
   "node guandan-score-wechat/serve.cjs",
   "http://127.0.0.1:8766/",
   "python3 -m http.server 8766 --bind 0.0.0.0",
