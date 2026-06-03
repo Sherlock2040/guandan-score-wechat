@@ -326,7 +326,7 @@
 
     .score-line {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 112px;
+      grid-template-columns: minmax(0, 1fr) minmax(150px, 0.72fr);
       gap: 10px;
       align-items: center;
       padding: 10px;
@@ -348,6 +348,23 @@
       font-family: Georgia, "Times New Roman", serif;
       font-size: 20px;
       font-weight: 900;
+    }
+
+    .score-editor {
+      display: grid;
+      gap: 7px;
+    }
+
+    .score-tools {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .score-tools button {
+      min-height: 36px;
+      padding: 0 8px;
+      font-size: 14px;
     }
 
     .bench {
@@ -595,7 +612,7 @@
       }
 
       .score-line {
-        grid-template-columns: minmax(0, 1fr) 96px;
+        grid-template-columns: minmax(0, 1fr) minmax(138px, 0.8fr);
       }
 
       .bar button {
@@ -944,7 +961,13 @@
         seats.innerHTML +=
           '<div class="score-line">' +
           '<strong>' + escapeHtml(state.names[pid]) + '</strong>' +
-          '<input type="number" inputmode="decimal" step="1" id="scoreInput' + pid + '" placeholder="0">' +
+          '<div class="score-editor">' +
+          '<input type="text" inputmode="text" enterkeyhint="done" autocomplete="off" id="scoreInput' + pid + '" placeholder="可输入 -10" oninput="normalizeScoreInput(' + pid + ')">' +
+          '<div class="score-tools">' +
+          '<button type="button" onclick="toggleScoreSign(' + pid + ')" title="切换正负">±</button>' +
+          '<button type="button" onclick="resetScoreInput(' + pid + ')" title="清空分数">清</button>' +
+          '</div>' +
+          '</div>' +
           '</div>';
       });
 
@@ -952,6 +975,44 @@
         return state.names[pid];
       });
       byId("benchInfo").textContent = benchNames.length ? ("候补：" + benchNames.join("、")) : "暂无候补";
+      hideError();
+    }
+
+    function normalizeScoreText(value) {
+      return String(value || "")
+        .trim()
+        .replace(/[\u2212\uff0d]/g, "-")
+        .replace(/\s+/g, "");
+    }
+
+    function normalizeScoreInput(pid) {
+      var input = byId("scoreInput" + pid);
+      if (!input) return;
+      var normalized = normalizeScoreText(input.value);
+      if (input.value !== normalized) input.value = normalized;
+      hideError();
+    }
+
+    function toggleScoreSign(pid) {
+      var input = byId("scoreInput" + pid);
+      if (!input) return;
+      var normalized = normalizeScoreText(input.value);
+      if (!normalized || normalized === "0") {
+        input.value = "-";
+      } else if (normalized.charAt(0) === "-") {
+        input.value = normalized.slice(1);
+      } else {
+        input.value = "-" + normalized.replace(/^\+/, "");
+      }
+      input.focus();
+      hideError();
+    }
+
+    function resetScoreInput(pid) {
+      var input = byId("scoreInput" + pid);
+      if (!input) return;
+      input.value = "";
+      input.focus();
       hideError();
     }
 
@@ -1022,16 +1083,21 @@
       for (var i = 0; i < state.table.length; i += 1) {
         var pid = state.table[i];
         var input = byId("scoreInput" + pid);
-        var raw = input ? input.value.trim() : "";
+        var raw = input ? normalizeScoreText(input.value) : "";
         if (raw === "") {
           showError("请输入所有上桌选手得分");
           return;
         }
-        var score = Number(raw);
-        if (!Number.isFinite(score)) {
-          showError("得分必须是数字");
+        if (raw === "-" || raw === "+" || raw === "." || raw === "-." || raw === "+.") {
+          showError("得分必须是完整数字");
           return;
         }
+        var score = Number(raw);
+        if (!Number.isFinite(score)) {
+          showError("得分必须是数字，例如 10 或 -10");
+          return;
+        }
+        if (input) input.value = raw;
         vals.push({ pid: pid, score: score });
       }
       var total = vals.reduce(function (sum, item) {
