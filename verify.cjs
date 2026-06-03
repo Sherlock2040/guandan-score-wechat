@@ -5,6 +5,8 @@ const appDir = __dirname;
 const html = fs.readFileSync(path.join(appDir, "index.html"), "utf8");
 const readme = fs.readFileSync(path.join(appDir, "README.md"), "utf8");
 const server = fs.readFileSync(path.join(appDir, "serve.cjs"), "utf8");
+const qr = fs.readFileSync(path.join(appDir, "guandan-score-qr.svg"), "utf8");
+const qrPng = fs.readFileSync(path.join(appDir, "guandan-score-qr.png"));
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
 
 function assert(condition, message) {
@@ -68,6 +70,7 @@ assert(normalizeScoreText(" +5 ") === "+5", "score normalizer should preserve pl
 [
   "微信内置浏览器",
   "https://sherlock2040.github.io/guandan-score-wechat/",
+  "![掼蛋计分二维码](./guandan-score-qr.png)",
   "微信键盘不显示负号",
   "node guandan-score-wechat/serve.cjs",
   "http://127.0.0.1:8766/",
@@ -87,11 +90,15 @@ assert(normalizeScoreText(" +5 ") === "+5", "score normalizer should preserve pl
 ].forEach((text) => assert(server.includes(text), `missing server text: ${text}`));
 
 assert(!html.includes('type="number" inputmode="decimal"'), "score inputs should not use mobile decimal keyboard without minus");
+assert(qr.includes("<svg") && qr.includes("https://sherlock2040.github.io/guandan-score-wechat/"), "QR SVG should include the published link");
+assert((qr.match(/<rect /g) || []).length > 300, "QR SVG should contain enough modules");
+assert(qrPng.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])), "QR PNG should be a PNG file");
 
 console.log(JSON.stringify({
   ok: true,
   scripts: scripts.length,
   server: true,
+  qr: true,
   wechatReady: true,
   localOnly: true
 }, null, 2));

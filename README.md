@@ -21,6 +21,10 @@ GitHub Pages 地址：
 https://sherlock2040.github.io/guandan-score-wechat/
 ```
 
+二维码：
+
+![掼蛋计分二维码](./guandan-score-qr.png)
+
 把这个链接发到微信、手机浏览器或群聊里，其他人即可在移动端打开使用。
 
 ## 电脑本地打开
